@@ -1,1 +1,1 @@
-db = connect("mongodb://<%= @username %>:<%= @password %>@localhost:<%= @net_port %>/<%= @dbname %>")
+db = connect("mongodb://<%= @username %>:<%= @password %>@<%= @net_host %>:<%= @net_port %>/<%= @dbname %><% if @net_ssl_enabled -%>?ssl=true<% end -%>")

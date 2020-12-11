@@ -56,6 +56,8 @@ class mongodb (
   $storage_engine          = undef,
   $net_bindip              = '127.0.0.1',
   $net_port                = '27017',
+  $net_host                = 'localhost',
+  $net_ssl                 = {}, 
   $authorization           = undef,
   $security_keyfile        = undef,
   $replication_oplogsizemb = undef,

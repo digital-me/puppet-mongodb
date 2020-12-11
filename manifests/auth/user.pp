@@ -38,15 +38,26 @@ define mongodb::auth::user (
   }
 
   $net_port = $mongodb::net_port
+  $net_host = $mongodb::net_host
+  $net_ssl  = $mongodb::net_ssl
 
   # Construct the correct command line to call Mongo shell
   if ($scl_name) {
-    $mongo_cmd = "scl enable ${scl_name} -- mongo --quiet --port $net_port"
+    $mongo_cmd = "scl enable ${scl_name} -- mongo --quiet"
   } else {
-    $mongo_cmd = "mongo --quiet --port $net_port"
+    $mongo_cmd = "mongo --quiet"
   }
 
-  # Construct login arguments if relevant
+  # Add network arguments as required
+  if ($net_ssl and $net_ssl['mode'] and $net_ssl['mode'] != 'disabled' ) {
+    $mongo_net_arg = "--port $net_port --host $net_host --ssl"
+    $net_ssl_enabled = true
+  } else {
+    $mongo_net_arg = "--port $net_port --host $net_host"
+    $net_ssl_enabled = false
+  }
+
+  # Add login arguments if relevant
   if ($login_username) { 
     $mongo_user_arg = " -u '${login_username}'"
   }
@@ -73,8 +84,8 @@ define mongodb::auth::user (
 		    command => "{ cat /root/.mongorc.js; cat <<EOF
 ${script}
 EOF
-} | ${mongo_cmd} ${mongo_db_arg}",
-        unless  => "${mongo_cmd} -u ${username} -p ${password} ${dbname}",
+} | ${mongo_cmd} ${mongo_net_arg} ${mongo_db_arg}",
+        unless  => "${mongo_cmd} ${mongo_net_arg} -u ${username} -p ${password} ${dbname}",
         logoutput => on_failure,
 		  }
 
