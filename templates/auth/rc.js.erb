@@ -1,1 +1,8 @@
-db = connect("mongodb://<%= @username %>:<%= @password %>@localhost:<%= @net_port %>/<%= @dbname %>")
+// Connect to the server if not already done
+if (db.serverStatus()['ok'] != 1) {
+  db = connect(
+    "mongodb://<%= @username %>:<%= @password %>@<%= @net_host %>:<%= @net_port %>/"
+    + db.getName()
+    + "?authSource=<%= @dbname %><% if @net_ssl_enabled -%>&ssl=true<% end -%>"
+  );
+}

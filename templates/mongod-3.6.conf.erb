@@ -52,6 +52,12 @@ net:
     # Alternative directory for UNIX domain sockets (defaults to /tmp)
     pathPrefix: <%= @runpath %>
 
+<% if !@net_ssl.empty? -%>
+  ssl:
+<% @net_ssl.sort_by {|key, value| key}.each do |key,value| -%>
+    <%= key %>: <%= value %>
+<% end -%>
+<% else -%>
   #ssl:
     # Set the SSL operation mode (disabled|allowSSL|preferSSL|requireSSL)
     #mode: <string>
@@ -61,6 +67,7 @@ net:
 
     # Certificate Authority file for SSL
     #CAFile: <string>
+<% end -%>
 
 
 # storage Options - How and Where to store data
