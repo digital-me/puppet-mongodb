@@ -52,6 +52,15 @@ class mongodb::params (
     }
   }
 
+  # start and stop commands
+  if ($with_systemd) {
+    $service_start = "systemctl start $service"
+    $service_stop = "systemctl stop $service"
+  } else {
+    $service_start = "service $service start"
+    $service_stop = "service $service stop"
+  }
+
   # template 
 	if versioncmp("$mongod_version", '3.4') >= 0 {
     $template = "${module_name}/mongod-3.4.conf.erb"

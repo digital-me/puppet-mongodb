@@ -20,21 +20,21 @@ define mongodb::auth::user (
   $username = "$name",
   $dbname   = 'admin',
   $ensure   = 'present',
-  $roles		= '[ "readWriteAnyDatabase" ]',
+  $roles    = '[ "readWriteAnyDatabase" ]',
   $scl_name = "$mongodb::scl_name",
   $login_username = "$mongodb::auth::root_username",
   $login_password = "$mongodb::auth::root_password",
   $login_dbname = "$mongodb::auth::root_dbname",
-  $local_username	= false,
+  $local_username  = false,
   $local_userhome = false,
 ) {
-  require mongodb
   include mongodb::auth
 
   # Make sure root user is created first
   # Just in case the resource is called directly
   if ($username != $mongodb::auth::root_username) {
-    Mongodb::Auth::User["$mongodb::auth::root_username"] -> Exec["user-${username}"]
+    Anchor['mongo-auth-enabled'] ->
+    Exec["user-${username}"]
   }
 
   $net_port = $mongodb::net_port
@@ -79,15 +79,19 @@ define mongodb::auth::user (
     'present': {
       $script = template('mongodb/auth/user.js.erb')
 
-		  exec { "user-${username}":
-		    provider => 'shell',
-		    command => "{ cat /root/.mongorc.js; cat <<EOF
+      # Create the user using root rc and the template script
+      exec { "user-${username}":
+        provider => 'shell',
+        command => "{ cat /root/.mongorc.js; cat <<EOF
 ${script}
 EOF
 } | ${mongo_cmd} ${mongo_net_arg} ${mongo_db_arg}",
-        unless  => "${mongo_cmd} ${mongo_net_arg} -u ${username} -p ${password} ${dbname}",
+        unless  => [ # The authentication already works...
+          "${mongo_cmd} ${mongo_net_arg} -u ${username} -p ${password} ${dbname}",
+        ],
         logoutput => on_failure,
-		  }
+      } ->
+      Anchor['mongo-auth-end']
 
       if ($local_userhome) {
         $rc_path = "$local_userhome/.mongorc.js"
@@ -96,19 +100,21 @@ EOF
       }
 
       if ($local_username) {
+        # Create rc file for the user if required
         file { "mongo-rc-${username}":
           path      => "${rc_path}",
           content   => template('mongodb/auth/rc.js.erb'),
           owner     => "${local_username}" ? {
-            true		=> "${username}",
-            default	=> "${local_username}",
+            true    => "${username}",
+            default => "${local_username}",
           },
           mode      => '0600',
           require   => Exec["user-${username}"],
           show_diff => false,
-        }
+        } ->
+        Anchor['mongo-auth-end']
       }
-		}
+    }
     default: {
       notice('Unknown value for ensure')
     }
