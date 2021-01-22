@@ -22,6 +22,8 @@ class mongodb (
   $runpath        = $::mongodb::params::runpath,
   $pidfilepath    = $::mongodb::params::pidfilepath,
   $with_systemd   = $::mongodb::params::with_systemd,
+  $service_start  = $::mongodb::params::service_start,
+  $service_stop   = $::mongodb::params::service_stop,
   # Just in case you wonder : quoted 'false' is for true/false text to be
   # set in the configuration file.
   $logpath        = $::mongodb::params::logpath,
